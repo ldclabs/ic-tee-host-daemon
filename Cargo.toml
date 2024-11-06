@@ -12,7 +12,7 @@ license = "MIT"
 [dependencies]
 futures = "0.3"
 tokio = { version = "1", features = ["full"] }
-tokio-vsock = "0.5"
+tokio-vsock = { git = "https://github.com/rust-vsock/tokio-vsock/", rev = "96bc29a731d542c791f44903f1e5e5c26e3fb500" }
 anyhow = "1"
 clap = { version = "4.5", features = ["derive"] }
 log = "0.4"

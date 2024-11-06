@@ -1,26 +1,20 @@
 // Borrowed with love from oyster-tcp-proxy
 // https://github.com/marlinprotocol/oyster-tcp-proxy
 
-use std::{fmt::Debug, io, net::SocketAddr, num::ParseIntError};
+use std::{fmt::Debug, io, net::SocketAddr};
 use tokio::net::TcpStream;
 use tokio_vsock::VsockAddr;
 
-#[derive(thiserror::Error, Debug)]
-pub enum VsockAddrParseError {
-    #[error("invalid vsock address, should contain one : (colon)")]
-    SplitError,
-    #[error("failed to parse cid as a u32")]
-    CidParseError(#[source] ParseIntError),
-    #[error("failed to parse port as a u32")]
-    PortParseError(#[source] ParseIntError),
-}
-
-pub fn split_vsock(addr: &str) -> Result<VsockAddr, VsockAddrParseError> {
+pub fn split_vsock(addr: &str) -> Result<VsockAddr, String> {
     let (cid, port) = addr
         .split_once(':')
-        .ok_or(VsockAddrParseError::SplitError)?;
-    let cid = cid.parse().map_err(VsockAddrParseError::CidParseError)?;
-    let port = port.parse().map_err(VsockAddrParseError::PortParseError)?;
+        .ok_or("invalid vsock address, should contain one : (colon)".to_string())?;
+    let cid: u32 = cid
+        .parse()
+        .map_err(|_| format!("failed to parse cid {} as a u32", cid))?;
+    let port: u32 = port
+        .parse()
+        .map_err(|_| format!("failed to parse port {} as a u32", port))?;
 
     Ok(VsockAddr::new(cid, port))
 }

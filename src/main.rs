@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
-use structured_logger::{async_json::new_writer, get_env_level, unix_ms, Builder};
-use tokio::{io, net::TcpListener};
+use structured_logger::{async_json::new_writer, get_env_level, Builder};
+use tokio::io;
 
 mod helper;
 mod ip_to_vsock;
@@ -36,13 +36,14 @@ async fn main() -> Result<()> {
         .init();
 
     let serve_vsock_to_ip_transparent = async {
-        let vsock_addr = helper::split_vsock(&cli.vsock_to_ip_transparent)?;
+        let vsock_addr =
+            helper::split_vsock(&cli.vsock_to_ip_transparent).map_err(anyhow::Error::msg)?;
         vsock_to_ip_transparent::serve(vsock_addr).await?;
         Ok(())
     };
 
     let serve_ip_to_vsock = async {
-        let vsock_addr = helper::split_vsock(&cli.ip_to_vsock_addr)?;
+        let vsock_addr = helper::split_vsock(&cli.ip_to_vsock_addr).map_err(anyhow::Error::msg)?;
         ip_to_vsock::serve(&cli.ip_to_vsock_ip_addr, vsock_addr).await?;
         Ok(())
     };

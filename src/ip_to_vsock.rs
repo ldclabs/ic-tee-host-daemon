@@ -1,6 +1,8 @@
 use anyhow::{Context, Result};
-use futures::FutureExt;
-use tokio::{io::copy_bidirectional, io::AsyncReadExt, io::AsyncWriteExt, net::TcpStream};
+use tokio::{
+    io::copy_bidirectional,
+    net::{TcpListener, TcpStream},
+};
 use tokio_vsock::{VsockAddr, VsockStream};
 
 pub async fn serve(listen_addr: &str, server_addr: VsockAddr) -> Result<()> {
@@ -10,10 +12,10 @@ pub async fn serve(listen_addr: &str, server_addr: VsockAddr) -> Result<()> {
     log::info!(target: "ip_to_vsock", "listening on {:?}, proxying to: {:?}", listen_addr, server_addr);
 
     while let Ok((inbound, _)) = listener.accept().await {
-        tokio::spawn(async {
-            transfer(inbound, server_addr).await.unwrap_or_else(
-                |err| log::error!(target: "ip_to_vsock", "error in transfer: {:?}", err),
-            );
+        tokio::spawn(async move {
+            if let Err(err) = transfer(inbound, server_addr).await {
+                log::error!(target: "ip_to_vsock", "error in transfer: {:?}", err)
+            }
         });
     }
 
@@ -34,9 +36,10 @@ async fn transfer(mut inbound: TcpStream, proxy_addr: VsockAddr) -> Result<()> {
         .await
         .map_err(|err| {
             anyhow::anyhow!(
-                "error in connection between {} and {}",
+                "error in connection between {} and {}, {:?}",
                 inbound_addr,
-                proxy_addr
+                proxy_addr,
+                err
             )
         })?;
 
