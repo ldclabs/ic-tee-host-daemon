@@ -1,7 +1,7 @@
 [package]
 name = "ic_tee_host_daemon"
 version = "0.1.0"
-description = ""
+description = "A daemon running on the host machine of TEEs."
 publish = false
 edition = "2021"
 repository = "https://github.com/ldclabs/ic-tee-host-daemon"

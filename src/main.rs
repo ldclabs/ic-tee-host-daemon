@@ -11,21 +11,21 @@ mod vsock_to_ip_transparent;
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 pub struct Cli {
-    /// vsock address of the listener side, usually open to the other side of the transparent proxy (e.g. 3:1200)
-    #[clap(long)]
-    vsock_to_ip_transparent: String,
+    /// VSOCK address for outbound connections from enclave (e.g. 3:1200)
+    #[clap(long, default_value = "3:1200")]
+    outbound_vsock_addr: String,
 
-    /// ip address of the listener side (e.g. 0.0.0.0:4000)
-    #[clap(short, long, value_parser)]
-    ip_to_vsock_ip_addr: String,
+    /// IP address to listen for inbound connections to enclave (e.g. 0.0.0.0:443)
+    #[clap(long, default_value = "0.0.0.0:443")]
+    inbound_listen_addr: String,
 
-    /// vsock address of the upstream side (e.g. 88:4000)
-    #[clap(short, long, value_parser)]
-    ip_to_vsock_addr: String,
+    /// VSOCK address for inbound connections to enclave (e.g. 88:443)
+    #[clap(long, default_value = "88:443")]
+    inbound_vsock_addr: String,
 
-    /// address to listen for debug logs (e.g. 127.0.0.1:9999)
-    #[arg(long)]
-    debug_log_addr: Option<String>,
+    /// Address to listen for debug logs (e.g. 127.0.0.1:9999)
+    #[arg(long, default_value = "127.0.0.1:9999")]
+    logtail_addr: String,
 }
 
 #[tokio::main]
@@ -37,21 +37,20 @@ async fn main() -> Result<()> {
 
     let serve_vsock_to_ip_transparent = async {
         let vsock_addr =
-            helper::split_vsock(&cli.vsock_to_ip_transparent).map_err(anyhow::Error::msg)?;
+            helper::split_vsock(&cli.outbound_vsock_addr).map_err(anyhow::Error::msg)?;
         vsock_to_ip_transparent::serve(vsock_addr).await?;
         Ok(())
     };
 
     let serve_ip_to_vsock = async {
-        let vsock_addr = helper::split_vsock(&cli.ip_to_vsock_addr).map_err(anyhow::Error::msg)?;
-        ip_to_vsock::serve(&cli.ip_to_vsock_ip_addr, vsock_addr).await?;
+        let vsock_addr =
+            helper::split_vsock(&cli.inbound_vsock_addr).map_err(anyhow::Error::msg)?;
+        ip_to_vsock::serve(&cli.inbound_listen_addr, vsock_addr).await?;
         Ok(())
     };
 
     let serve_debug_log_addr = async {
-        if let Some(ref addr) = cli.debug_log_addr {
-            logtail::serve(addr).await?;
-        }
+        logtail::serve(&cli.logtail_addr).await?;
         Ok(())
     };
 
