@@ -1,5 +1,7 @@
 # IC TEE Host Daemon
 
+**Moved to**: https://github.com/ldclabs/ic-tee/tree/main/src/ic_tee_host_daemon
+
 `ic_tee_host_daemon` is a daemon running on the host machine of an enclave, providing the following functions:
 
 1. Forwards requests from the enclave to the internet.
